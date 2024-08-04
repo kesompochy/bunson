@@ -4,8 +4,12 @@ import type { Server } from 'bun';
 export default class HTTPServer {
   private handler: JsonRpcHandler;
   server: Server | null = null; 
-  constructor(handler: JsonRpcHandler) {
-    this.handler = handler
+  constructor(handler: JsonRpcHandler | { [key: string]: (params: any) => any }) {
+    if (handler instanceof JsonRpcHandler) {
+      this.handler = handler;
+    } else {
+      this.handler = new JsonRpcHandler({ methods: handler });
+    }
   }
   listen(port: number) {
     this.server = Bun.serve({
