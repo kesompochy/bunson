@@ -5,6 +5,14 @@
   "type": "module",
   "author": "kesompochy",
   "license": "MIT",
+  "description": "JSON-RPC 2.0 server implementation for Bun.",
+  "keywords": [
+    "bun",
+    "json-rpc",
+    "jsonrpc",
+    "jsonrpc-2.0",
+    "http"
+  ],
   "devDependencies": {
     "@types/bun": "^1.1.6",
     "bun-types": "latest"
