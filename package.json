@@ -1,0 +1,18 @@
+{
+  "name": "bunson",
+  "version": "0.0.1",
+  "main": "src/index.ts",
+  "type": "module",
+  "author": "kesompochy",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/bun": "^1.1.6",
+    "bun-types": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "@types/jest": "^29.5.12"
+  }
+}
