@@ -1,10 +1,9 @@
 import BunsonServer from '~/http-server';
 import JsonRpcHandler from '~/json-rpc-handler';
+import getPort from 'get-port';
 
-const PORT = 3000;
-
-const fetchToServer = async (request: any) => {
-  const response = await fetch(`http://localhost:${PORT}`, {
+const fetchToServer = async (request: any, port: number) => {
+  const response = await fetch(`http://localhost:${port}`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -19,7 +18,8 @@ describe("BunsonServer", () => {
   describe("constructed with JsonRpcHandler", () => {
     let bunsonRpcServer: BunsonServer;
     let jsonRpcHandler: JsonRpcHandler;
-    beforeEach(() => {
+    let port: number;
+    beforeEach(async () => {
       const methods = {
         test: () => "test",
         withPositionalParams: (params: number[]) => params[0] - params[1],
@@ -29,7 +29,8 @@ describe("BunsonServer", () => {
         methods: methods,
       });
       bunsonRpcServer = new BunsonServer(jsonRpcHandler);
-      bunsonRpcServer.listen(PORT);
+      port = await getPort();
+      bunsonRpcServer.listen(port);
     });
     afterEach(() => {
       bunsonRpcServer.stop();
@@ -42,7 +43,7 @@ describe("BunsonServer", () => {
           params: [],
           id: 1,
         };
-        const responseJson = await fetchToServer(request);
+        const responseJson = await fetchToServer(request, port);
         expect(responseJson).toEqual({
           jsonrpc: "2.0",
           result: "test",
@@ -56,7 +57,7 @@ describe("BunsonServer", () => {
           params: [3, 7],
           id: 1,
         };
-        const responseJson = await fetchToServer(request);
+        const responseJson = await fetchToServer(request, port);
 
         expect(responseJson).toEqual({
           jsonrpc: "2.0",
@@ -71,7 +72,7 @@ describe("BunsonServer", () => {
           params: { a: 3, b: 7 },
           id: 1,
         };
-        const responseJson = await fetchToServer(request);
+        const responseJson = await fetchToServer(request, port);
 
         expect(responseJson).toEqual({
           jsonrpc: "2.0",
@@ -85,7 +86,7 @@ describe("BunsonServer", () => {
           method: "test",
           params: [],
         };
-        const responseJson = await fetchToServer(request); 
+        const responseJson = await fetchToServer(request, port); 
         expect(responseJson).toBeNull();
       });
       it("should handle a batch request", async () => {
@@ -96,7 +97,7 @@ describe("BunsonServer", () => {
           { foo: "bar" },
           { jsonrpc: "2.0", method: "NoSuchMethod", params: [42, 23], id: 3},
         ];
-        const responseJson = await fetchToServer(request);
+        const responseJson = await fetchToServer(request, port);
         expect(responseJson).toEqual([
           { jsonrpc: "2.0", result: -1, id: 1 },
           { jsonrpc: "2.0", result: "test", id: 2 },
@@ -113,7 +114,7 @@ describe("BunsonServer", () => {
           params: [],
           id: 1,
         };
-        const responseJson = await fetchToServer(request);
+        const responseJson = await fetchToServer(request, port);
 
         expect(responseJson).toEqual({
           jsonrpc: "2.0",
@@ -125,7 +126,7 @@ describe("BunsonServer", () => {
         });
       }); 
       it("should return a error to invalid JSON request", async () => {
-        const response = await fetch(`http://localhost:${PORT}`, {
+        const response = await fetch(`http://localhost:${port}`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -149,7 +150,7 @@ describe("BunsonServer", () => {
           method: "test",
           params: "foo",
         };
-        const responseJson = await fetchToServer(request);
+        const responseJson = await fetchToServer(request, port);
 
         expect(responseJson).toEqual({
           jsonrpc: "2.0",
@@ -161,7 +162,7 @@ describe("BunsonServer", () => {
         });
       });
       it("should return an error to invalid JSON, batch request", async () => {
-        const response = await fetch(`http://localhost:${PORT}`, {
+        const response = await fetch(`http://localhost:${port}`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -183,7 +184,7 @@ describe("BunsonServer", () => {
       });
       it("should return an error to an empty array", async () => {
         const request: [] = [];
-        const responseJson = await fetchToServer(request);
+        const responseJson = await fetchToServer(request, port);
 
         expect(responseJson).toEqual({
           jsonrpc: "2.0",
@@ -196,7 +197,7 @@ describe("BunsonServer", () => {
       });
       it("should return an error to an invalid batch request", async () => {
         const request = [1, 2, 3]
-        const responseJson = await fetchToServer(request);
+        const responseJson = await fetchToServer(request, port);
         expect(responseJson).toEqual([
           {
             jsonrpc: "2.0",
@@ -227,13 +228,13 @@ describe("BunsonServer", () => {
     });
     describe("as a HTTP server", () => {
       it("can listen on a port", async () => {
-        const response = await fetch(`http://localhost:${PORT}`);
+        const response = await fetch(`http://localhost:${port}`);
         expect(response).toBeDefined();
       });
       it("can be closed", async () => {
         bunsonRpcServer.stop();    
         try {
-          await fetch(`http://localhost:${PORT}`);
+          await fetch(`http://localhost:${port}`);
         } catch (error) {
           expect(error).toBeDefined();
         }
@@ -248,6 +249,7 @@ describe("BunsonServer", () => {
         withNamedParams: (param: { a: number, b: number }) => param.a - param.b,
       };
       const bunsonRpcServer = new BunsonServer(methods);
+      const PORT = await getPort();
       bunsonRpcServer.listen(PORT);
       const request = {
         jsonrpc: "2.0",
@@ -255,12 +257,45 @@ describe("BunsonServer", () => {
         params: [],
         id: 1,
       };
-      const responseJson = await fetchToServer(request);
+      const responseJson = await fetchToServer(request, PORT);
       expect(responseJson).toEqual({
         jsonrpc: "2.0",
         result: "test",
         id: 1,
       });
+      bunsonRpcServer.stop();
+    });
+  });
+  describe("constructed with CORS configs", () => {
+    it("should set CORS headers", async () => {
+      const methods = {
+        test: () => "test",
+      };
+      const corsConfig = {
+        origin: "http://example.com",
+        methods: ["GET", "POST"],
+        allowedHeaders: ["Content-Type"],
+        exposedHeaders: ["Content-Length"],
+        credentials: true,
+        maxAge: 3600,
+      };
+      const bunsonRpcServer = new BunsonServer(methods, corsConfig);
+      const PORT = await getPort();
+      bunsonRpcServer.listen(PORT);
+      const response = await fetch(`http://localhost:${PORT}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Origin": "http://example.com",
+        },
+        body: JSON.stringify({
+          jsonrpc: "2.0",
+          method: "test",
+          params: [],
+          id: 1,
+        }),
+      });
+      expect(response.headers.get("Access-Control-Allow-Origin")).toBe("http://example.com");
       bunsonRpcServer.stop();
     });
   });
