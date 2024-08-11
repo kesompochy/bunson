@@ -56,7 +56,7 @@ export default class HTTPClient {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify(body),
-        mode: 'cors'
+        mode: this.cors
       });
       const data = await response.json();
       return data;
