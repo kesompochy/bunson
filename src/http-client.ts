@@ -50,14 +50,16 @@ export default class HTTPClient {
       throw new Error(`Method ${method} not found`);
     }
     try {
-      const request = await fetch(this.url, {
+      const response = await fetch(this.url, {
         method: 'POST',
-        headers: {'Content-Type': 'application/json'},
+        headers: {
+          'Content-Type': 'application/json'
+        },
         body: JSON.stringify(body),
-        mode: this.cors
+        mode: 'cors'
       });
-      const response = await request.json();
-      return response;
+      const data = await response.json();
+      return data;
     } catch (e) {
       console.error(e);
       throw new Error(e);
@@ -111,7 +113,7 @@ export default class HTTPClient {
     }
   }
 
-  removeMethod(method: string): void {
+  removeMethod(method: string | string[]): void {
     if (Array.isArray(method)) {
       method.forEach((m) => this.methods.delete(m));
     } else {
