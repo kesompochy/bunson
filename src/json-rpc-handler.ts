@@ -52,9 +52,10 @@ export default class JsonRpcHandler {
   }
 
   handleSingleRequest(request: JsonRpcRequest): JsonRpcResponse | void {
+    const id = request.id || ((request.id === 0) ? 0 : null);
     const response: JsonRpcResponse = {
       jsonrpc: '2.0',
-      id: request.id || null,
+      id: id,
     };
 
     if (request.jsonrpc !== '2.0' || (request.params instanceof Array === false && typeof request.params !== 'object')) {
@@ -65,7 +66,7 @@ export default class JsonRpcHandler {
       return response;
     }
 
-    if (!request.id) {
+    if (!request.id && request.id !== 0 && request.id !== null) {
       return ;
     }
 

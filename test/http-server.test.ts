@@ -105,6 +105,34 @@ describe("BunsonServer", () => {
           { jsonrpc: "2.0", error: { code: -32601, message: "Method not found" }, id: 3 },
         ]);
       });
+      it("should handle a request with id 0", async () => {
+        const request = {
+          jsonrpc: "2.0",
+          method: "test",
+          params: [],
+          id: 0,
+        };
+        const responseJson = await fetchToServer(request, port);
+        expect(responseJson).toEqual({
+          jsonrpc: "2.0",
+          result: "test",
+          id: 0,
+        });
+      });
+      it("should handle a request with id null", async () => {
+        const request = {
+          jsonrpc: "2.0",
+          method: "test",
+          params: [],
+          id: null,
+        };
+        const responseJson = await fetchToServer(request, port);
+        expect(responseJson).toEqual({
+          jsonrpc: "2.0",
+          result: "test",
+          id: null,
+        });
+      });
     });
     describe("with a invalid request", () => {
       it("should return a error to undefined method request", async () => {
