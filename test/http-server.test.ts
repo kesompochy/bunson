@@ -327,5 +327,35 @@ describe("BunsonServer", () => {
       bunsonRpcServer.stop();
     });
   });
+  describe("constructed with a async method", () => {
+    it("should handle a valid request", async () => {
+      const methods = {
+        async test() {
+          const result = await new Promise((resolve) => {
+            setTimeout(() => {
+              resolve("test");
+            }, 10);
+          });
+          return result;
+        },
+      };
+      const bunsonRpcServer = new BunsonServer(methods);
+      const PORT = await getPort();
+      bunsonRpcServer.listen(PORT);
+      const request = {
+        jsonrpc: "2.0",
+        method: "test",
+        params: {},
+        id: 1,
+      };
+      const responseJson = await fetchToServer(request, PORT);
+      expect(responseJson).toEqual({
+        jsonrpc: "2.0",
+        result: "test",
+        id: 1,
+      });
+      bunsonRpcServer.stop();
+    });
+  });
 });
 

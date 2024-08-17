@@ -13,7 +13,7 @@ describe("JsonRpcHandler", () => {
     });
   });
   describe("with a valid request", () => {
-    it("should handle a valid request", () => {
+    it("should handle a valid request", async () => {
       const request = {
         jsonrpc: "2.0",
         method: "test",
@@ -21,7 +21,7 @@ describe("JsonRpcHandler", () => {
         id: 1,
       };
 
-      const response = handler.handleRequest(request);
+      const response = await handler.handleRequest(request);
 
       expect(response).toEqual({
         jsonrpc: "2.0",
@@ -29,44 +29,44 @@ describe("JsonRpcHandler", () => {
         id: 1,
       });
     });
-    it("should handle a valid request with positional params", () => {
+    it("should handle a valid request with positional params", async () => {
       const request = {
         jsonrpc: "2.0",
         method: "withPositionalParams",
         params: [3, 7],
         id: 1,
       };
-      const response = handler.handleRequest(request);
+      const response = await handler.handleRequest(request);
       expect(response).toEqual({
         jsonrpc: "2.0",
         result: -4,
         id: 1,
       });
     });
-    it("should handle a valid request with named params", () => {
+    it("should handle a valid request with named params", async () => {
       const request = {
         jsonrpc: "2.0",
         method: "withNamedParams",
         params: { a: 3, b: 7 },
         id: 1,
       };
-      const response = handler.handleRequest(request);
+      const response = await handler.handleRequest(request);
       expect(response).toEqual({
         jsonrpc: "2.0",
         result: -4,
         id: 1,
       });
     });
-    it("should not respond to a notify request", () => {
+    it("should not respond to a notify request", async () => {
       const request = {
         jsonrpc: "2.0",
         method: "test",
         params: [],
       };
-      const response = handler.handleRequest(request);
+      const response = await handler.handleRequest(request);
       expect(response).toBeUndefined();
     });
-    it("should handle a batch request", () => {
+    it("should handle a batch request", async () => {
       const request = [
         { jsonrpc: "2.0", method: "withNamedParams", params: { a: 1, b: 2 }, id: 1 },
         { jsonrpc: "2.0", method: "test", params: [7] },
@@ -74,7 +74,7 @@ describe("JsonRpcHandler", () => {
         { foo: "bar" },
         { jsonrpc: "2.0", method: "UnexistingMethod", params: [7], id: 3 },
       ];
-      const response = handler.handleRequest(request as any);
+      const response = await handler.handleRequest(request as any);
       expect(response).toEqual([
         {
           jsonrpc: "2.0",
@@ -104,24 +104,24 @@ describe("JsonRpcHandler", () => {
         },
       ]);
     });
-    it("should not respond to batch with all notifications", () => {
+    it("should not respond to batch with all notifications", async () => {
       const request = [
         { jsonrpc: "2.0", method: "test", params: [] },
         { jsonrpc: "2.0", method: "test", params: [] },
       ];
-      const response = handler.handleRequest(request);
+      const response = await handler.handleRequest(request);
       expect(response).toBeUndefined();
     });
   });
   describe("with an invalid request", () => {
-    it("should return a error to undefined method request", () => {
+    it("should return a error to undefined method request", async () => {
       const request = {
         jsonrpc: "2.0",
         method: "undefined",
         params: [],
         id: 1,
       };
-      const response = handler.handleRequest(request);
+      const response = await handler.handleRequest(request);
       expect(response).toEqual({
         jsonrpc: "2.0",
         error: {
@@ -131,11 +131,11 @@ describe("JsonRpcHandler", () => {
         id: 1,
       });
     });
-    it("should return a error to invalid request", () => {
+    it("should return a error to invalid request", async () => {
       const request = {
         foo: "bar",
       };
-      const response = handler.handleRequest(request as any);
+      const response = await handler.handleRequest(request as any);
       expect(response).toEqual({
         jsonrpc: "2.0",
         error: {
@@ -145,9 +145,9 @@ describe("JsonRpcHandler", () => {
         id: null,
       });
     });
-    it("should return a error to an empty array request", () => {
+    it("should return a error to an empty array request", async () => {
       const request: [] = [];
-      const response = handler.handleRequest(request);
+      const response = await handler.handleRequest(request);
       expect(response).toEqual({
         jsonrpc: "2.0",
         error: {
@@ -157,11 +157,11 @@ describe("JsonRpcHandler", () => {
         id: null,
       });
     });
-    it("should return an error to an invalid batch but not empty request", () => {
+    it("should return an error to an invalid batch but not empty request", async () => {
       const request = [
         { foo: "bar" },
       ];
-      const response = handler.handleRequest(request as any);
+      const response = await handler.handleRequest(request as any);
       expect(response).toEqual([{
         jsonrpc: "2.0",
         error: {
@@ -171,9 +171,9 @@ describe("JsonRpcHandler", () => {
         id: null,
       }]);
     });
-    it("should return errors to an invalid batch request", () => {
+    it("should return errors to an invalid batch request", async () => {
       const request = [1, 2, 3]
-      const response = handler.handleRequest(request as any);
+      const response = await handler.handleRequest(request as any);
       expect(response).toEqual([
         {
           jsonrpc: "2.0",

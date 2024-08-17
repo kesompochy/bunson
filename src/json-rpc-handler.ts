@@ -29,7 +29,7 @@ export default class JsonRpcHandler {
     this.methods = Options.methods;
   }
 
-  handleRequest(request: JsonRpcRequest | JsonRpcRequest[]): JsonRpcResponse | JsonRpcResponse[] | void { 
+  async handleRequest(request: JsonRpcRequest | JsonRpcRequest[]): Promise<JsonRpcResponse | JsonRpcResponse[] | void> { 
     if (request instanceof Array) {
       if (request.length === 0) {
         const response: JsonRpcResponse = {
@@ -42,7 +42,7 @@ export default class JsonRpcHandler {
         };
         return response;
       }
-      const responses = this.handleBatchRequest(request);
+      const responses = await this.handleBatchRequest(request);
       if (responses.length === 0) {
         return ;
       }
@@ -51,7 +51,7 @@ export default class JsonRpcHandler {
     return this.handleSingleRequest(request as JsonRpcRequest);
   }
 
-  handleSingleRequest(request: JsonRpcRequest): JsonRpcResponse | void {
+  private async handleSingleRequest(request: JsonRpcRequest): Promise<JsonRpcResponse | void> {
     const id = request.id || ((request.id === 0) ? 0 : null);
     const response: JsonRpcResponse = {
       jsonrpc: '2.0',
@@ -77,7 +77,8 @@ export default class JsonRpcHandler {
       };
     } else {
       try {
-        response.result = this.methods[request.method](request.params);
+        const result = await this.methods[request.method](request.params);
+        response.result = result;
       } catch (error) {
         response.error = {
           code: -32000,
@@ -90,8 +91,8 @@ export default class JsonRpcHandler {
     return response;
   }
 
-  handleBatchRequest(requests: JsonRpcRequest[]): JsonRpcResponse[] {
-    const responses = requests.map((request) => this.handleRequest(request));
+  private async handleBatchRequest(requests: JsonRpcRequest[]): Promise<JsonRpcResponse[]> {
+    const responses = await Promise.all(requests.map((request) => this.handleRequest(request)));
     return responses.filter((response) => response !== undefined) as JsonRpcResponse[];
   }
 }

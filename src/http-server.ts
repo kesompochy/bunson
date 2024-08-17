@@ -80,7 +80,7 @@ export default class HTTPServer {
         headers,
       });
     }
-    const response = this.handler.handleRequest(request);
+    const response = await this.handler.handleRequest(request);
 
     if (!response) {
       return new Response(null, {
